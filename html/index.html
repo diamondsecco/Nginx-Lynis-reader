@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Portal de Relatórios Lynis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.8em;
+    }
+    .theme-toggle {
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+    }
+    .search-box {
+      width: 100%;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+    }
+    .search-box input {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 15px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      word-break: break-word;
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .low { background-color: #e74c3c; }
+    .medium { background-color: #f39c12; }
+    .high { background-color: #27ae60; }
+
+    .highlight {
+      background-color: #f9f9f9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      border-left: 4px solid #27ae60;
+      font-size: 0.9em;
+    }
+
+    .dark-mode {
+      background: #2c3e50;
+      color: #ecf0f1;
+    }
+    .dark-mode .card {
+      background: #34495e;
+    }
+    .dark-mode .highlight {
+      background-color: #3d566e;
+      border-left-color: #1abc9c;
+    }
+    .dark-mode input {
+      background-color: #3d566e;
+      color: #ecf0f1;
+      border: 1px solid #666;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Relatórios do Lynis</h1>
+      <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+    </header>
+
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Buscar relatório..." oninput="filterReports()">
+    </div>
+
+    <div class="cards" id="reportCards">
+      <!-- Cards aqui -->
+    </div>
+  </main>
+
+  <script>
+    const reports = [];
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function filterReports() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const cards = document.querySelectorAll('.card');
+      cards.forEach(card => {
+        const title = card.querySelector('h2').textContent.toLowerCase();
+        card.style.display = title.includes(query) ? 'block' : 'none';
+      });
+    }
+
+    function loadReports() {
+      fetch('/lynis-reports/')
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const links = Array.from(doc.querySelectorAll('a'))
+            .filter(a => a.href.match(/lynis-report-.*\.txt$/));
+
+          links.forEach(link => {
+            const filename = link.href.split('/').pop();
+            fetch(`/lynis-reports/${filename}`)
+              .then(res => res.text())
+              .then(data => {
+                const card = document.createElement('div');
+                card.className = 'card';
+
+                const lines = data.split('\n');
+                const reportContent = lines.map(line => {
+                  if (line.includes('Hardening Index')) {
+                    const index = parseInt(line.split(':')[1].trim());
+                    const badgeClass = index < 60 ? 'low' : (index < 80 ? 'medium' : 'high');
+                    return `<p><span class="badge ${badgeClass}">Hardening Index: ${index}</span></p>`;
+                  }
+                  return `<div class="highlight">${line}</div>`;
+                }).join('');
+
+                card.innerHTML = `
+                  <h2>${filename.replace('.txt', '')}</h2>
+                  <div>${reportContent}</div>
+                `;
+                document.getElementById('reportCards').appendChild(card);
+              });
+          });
+        });
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>

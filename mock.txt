@@ -1,0 +1,5 @@
+os_version=9.3
+os_kernel_version=5.14.0
+hostname=pilsen
+linux_kernel_version=#1 SMP PREEMPT_DYNAMIC Thu Dec 21 22:34:57 PST 2023
+hardening_index=74
