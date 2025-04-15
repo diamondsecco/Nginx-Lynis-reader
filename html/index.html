@@ -90,6 +90,13 @@
       font-size: 0.9em;
     }
 
+    mark {
+      background-color: #ffeaa7;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
     .dark-mode {
       background: #2c3e50;
       color: #ecf0f1;
@@ -105,6 +112,10 @@
       background-color: #3d566e;
       color: #ecf0f1;
       border: 1px solid #666;
+    }
+    .dark-mode mark {
+      background-color: #fdcb6e;
+      color: #2d3436;
     }
   </style>
 </head>
@@ -159,12 +170,16 @@
 
                 const lines = data.split('\n');
                 const reportContent = lines.map(line => {
-                  if (line.includes('Hardening Index')) {
-                    const index = parseInt(line.split(':')[1].trim());
+                  const indexMatch = line.match(/hardening_index=(\d+)/i);
+                  if (indexMatch) {
+                    const index = parseInt(indexMatch[1]);
                     const badgeClass = index < 60 ? 'low' : (index < 80 ? 'medium' : 'high');
                     return `<p><span class="badge ${badgeClass}">Hardening Index: ${index}</span></p>`;
                   }
-                  return `<div class="highlight">${line}</div>`;
+
+                  // Aplica destaque com <mark> em hardening_index=VALOR
+                  const highlightedLine = line.replace(/(hardening_index=\d+)/gi, '<mark>$1</mark>');
+                  return `<div class="highlight">${highlightedLine}</div>`;
                 }).join('');
 
                 card.innerHTML = `
