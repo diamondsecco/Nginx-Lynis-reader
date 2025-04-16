@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Portal de Audits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffffff;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      border-bottom: 2px solid #ccc;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 1.8em;
+      margin: 0;
+    }
+
+    .search-box {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .search-box input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 14px;
+      font-size: 1em;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
+
+    table.report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    table.report-table th,
+    table.report-table td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.report-table th {
+      background-color: #f7f7f7;
+      font-weight: bold;
+    }
+
+    .badge {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .low {
+      background-color: #e74c3c;
+    }
+
+    .medium {
+      background-color: #f39c12;
+    }
+
+    .high {
+      background-color: #2ecc71;
+    }
+
+    .highlight-line {
+      background-color: #f9f9f9;
+      border-left: 4px solid #2ecc71;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 0.95em;
+      margin-bottom: 4px;
+      white-space: pre-wrap;
+    }
+
+    mark {
+      background: #ffff99;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Relatórios de Auditoria</h1>
+    </header>
+
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Buscar relatório..." oninput="filterReports()">
+    </div>
+
+    <div id="reportCards">
+      <!-- Relatórios carregados dinamicamente -->
+    </div>
+  </main>
+
+  <script>
+    function filterReports() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const tables = document.querySelectorAll('.report-wrapper');
+      tables.forEach(wrapper => {
+        const title = wrapper.querySelector('h2').textContent.toLowerCase();
+        wrapper.style.display = title.includes(query) ? 'block' : 'none';
+      });
+    }
+
+    function loadReports() {
+      fetch('/lynis-reports/')
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const links = Array.from(doc.querySelectorAll('a'))
+            .filter(a => a.href.match(/lynis-report-.*\.txt$/));
+
+          links
+            .sort((a, b) => b.href.localeCompare(a.href)) // Mais recentes primeiro
+            .forEach(link => {
+              const filename = link.href.split('/').pop();
+              fetch(`/lynis-reports/${filename}`)
+                .then(res => res.text())
+                .then(data => {
+                  const wrapper = document.createElement('div');
+                  wrapper.className = 'report-wrapper';
+                  const lines = data.split('\n');
+
+                  let hardeningIndex = null;
+                  const highlights = [];
+
+                  lines.forEach(line => {
+                    const match = line.match(/hardening_index=(\d+)/i);
+                    if (match) {
+                      hardeningIndex = parseInt(match[1]);
+                    }
+                    const highlightedLine = line.replace(/(hardening_index=\d+)/gi, '<mark>$1</mark>');
+                    highlights.push(`<div class="highlight-line">${highlightedLine}</div>`);
+                  });
+
+                  const badgeClass = hardeningIndex < 60 ? 'low' : (hardeningIndex < 80 ? 'medium' : 'high');
+                  const badgeHTML = hardeningIndex !== null
+                    ? `<span class="badge ${badgeClass}">Hardening Index: ${hardeningIndex}</span>`
+                    : '';
+
+                  wrapper.innerHTML = `
+                    <h2>${filename.replace('.txt', '')}</h2>
+                    <table class="report-table">
+                      <tr>
+                        <th>Resumo</th>
+                        <td>${badgeHTML}</td>
+                      </tr>
+                      <tr>
+                        <th>Conteúdo</th>
+                        <td>${highlights.join('')}</td>
+                      </tr>
+                    </table>
+                  `;
+
+                  document.getElementById('reportCards').appendChild(wrapper);
+                });
+            });
+        });
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>
