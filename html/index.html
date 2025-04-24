@@ -5,149 +5,123 @@
   <title>Portal de Audits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      color: #333;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffffff;
+      color: #222;
       margin: 0;
       padding: 0;
     }
+
     main {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px;
     }
+
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 1.8em;
-    }
-    .theme-toggle {
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-size: 1.5em;
-    }
-    .search-box {
-      width: 100%;
+      border-bottom: 2px solid #ccc;
       margin-bottom: 30px;
-      display: flex;
-      justify-content: center;
+      padding-bottom: 10px;
     }
+
+    h1 {
+      font-size: 1.8em;
+      margin: 0;
+    }
+
+    .search-box {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
     .search-box input {
       width: 100%;
-      max-width: 500px;
-      padding: 12px 15px;
+      max-width: 400px;
+      padding: 10px 14px;
       font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
     }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 20px;
-      word-break: break-word;
-    }
-    .card h2 {
-      margin-top: 0;
-      font-size: 1.2em;
-      margin-bottom: 10px;
-    }
-    .badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 6px;
-      color: #fff;
-      font-weight: bold;
-      font-size: 0.9em;
-      margin-bottom: 10px;
-    }
-    .low { background-color: #e74c3c; }
-    .medium { background-color: #f39c12; }
-    .high { background-color: #27ae60; }
 
-    .highlight {
+    table.report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    table.report-table th,
+    table.report-table td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.report-table th {
+      background-color: #f7f7f7;
+      font-weight: bold;
+    }
+
+    .badge {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .low {
+      background-color: #e74c3c;
+    }
+
+    .medium {
+      background-color: #f39c12;
+    }
+
+    .high {
+      background-color: #2ecc71;
+    }
+
+    .highlight-line {
       background-color: #f9f9f9;
+      border-left: 4px solid #2ecc71;
       padding: 8px 12px;
-      border-radius: 6px;
-      margin-bottom: 6px;
-      border-left: 4px solid #27ae60;
-      font-size: 0.9em;
+      font-family: monospace;
+      font-size: 0.95em;
+      margin-bottom: 4px;
+      white-space: pre-wrap;
     }
 
     mark {
-      background-color: #ffeaa7;
-      padding: 2px 4px;
-      border-radius: 4px;
+      background: #ffff99;
       font-weight: bold;
     }
 
-    .dark-mode {
-      background: #2c3e50;
-      color: #ecf0f1;
-    }
-    .dark-mode .card {
-      background: #34495e;
-    }
-    .dark-mode .highlight {
-      background-color: #3d566e;
-      border-left-color: #1abc9c;
-    }
-    .dark-mode input {
-      background-color: #3d566e;
-      color: #ecf0f1;
-      border: 1px solid #666;
-    }
-    .dark-mode mark {
-      background-color: #fdcb6e;
-      color: #2d3436;
-    }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <h1>Relatórios</h1>
-      <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+      <h1>Relatórios de Auditoria</h1>
     </header>
 
     <div class="search-box">
       <input type="text" id="search" placeholder="Buscar relatório..." oninput="filterReports()">
     </div>
 
-    <div class="cards" id="reportCards">
-      <!-- Cards aqui -->
+    <div id="reportCards">
+      <!-- Relatórios carregados dinamicamente -->
     </div>
   </main>
 
   <script>
-    const reports = [];
-
-    function toggleTheme() {
-      document.body.classList.toggle('dark-mode');
-    }
-
     function filterReports() {
       const query = document.getElementById('search').value.toLowerCase();
-      const cards = document.querySelectorAll('.card');
-      cards.forEach(card => {
-        const title = card.querySelector('h2').textContent.toLowerCase();
-        card.style.display = title.includes(query) ? 'block' : 'none';
+      const tables = document.querySelectorAll('.report-wrapper');
+      tables.forEach(wrapper => {
+        const title = wrapper.querySelector('h2').textContent.toLowerCase();
+        wrapper.style.display = title.includes(query) ? 'block' : 'none';
       });
     }
 
@@ -160,35 +134,51 @@
           const links = Array.from(doc.querySelectorAll('a'))
             .filter(a => a.href.match(/lynis-report-.*\.txt$/));
 
-          links.forEach(link => {
-            const filename = link.href.split('/').pop();
-            fetch(`/lynis-reports/${filename}`)
-              .then(res => res.text())
-              .then(data => {
-                const card = document.createElement('div');
-                card.className = 'card';
+          links
+            .sort((a, b) => b.href.localeCompare(a.href)) // Mais recentes primeiro
+            .forEach(link => {
+              const filename = link.href.split('/').pop();
+              fetch(`/lynis-reports/${filename}`)
+                .then(res => res.text())
+                .then(data => {
+                  const wrapper = document.createElement('div');
+                  wrapper.className = 'report-wrapper';
+                  const lines = data.split('\n');
 
-                const lines = data.split('\n');
-                const reportContent = lines.map(line => {
-                  const indexMatch = line.match(/hardening_index=(\d+)/i);
-                  if (indexMatch) {
-                    const index = parseInt(indexMatch[1]);
-                    const badgeClass = index < 60 ? 'low' : (index < 80 ? 'medium' : 'high');
-                    return `<p><span class="badge ${badgeClass}">Hardening Index: ${index}</span></p>`;
-                  }
+                  let hardeningIndex = null;
+                  const highlights = [];
 
-                  // Aplica destaque com <mark> em hardening_index=VALOR
-                  const highlightedLine = line.replace(/(hardening_index=\d+)/gi, '<mark>$1</mark>');
-                  return `<div class="highlight">${highlightedLine}</div>`;
-                }).join('');
+                  lines.forEach(line => {
+                    const match = line.match(/hardening_index=(\d+)/i);
+                    if (match) {
+                      hardeningIndex = parseInt(match[1]);
+                    }
+                    const highlightedLine = line.replace(/(hardening_index=\d+)/gi, '<mark>$1</mark>');
+                    highlights.push(`<div class="highlight-line">${highlightedLine}</div>`);
+                  });
 
-                card.innerHTML = `
-                  <h2>${filename.replace('.txt', '')}</h2>
-                  <div>${reportContent}</div>
-                `;
-                document.getElementById('reportCards').appendChild(card);
-              });
-          });
+                  const badgeClass = hardeningIndex < 60 ? 'low' : (hardeningIndex < 80 ? 'medium' : 'high');
+                  const badgeHTML = hardeningIndex !== null
+                    ? `<span class="badge ${badgeClass}">Hardening Index: ${hardeningIndex}</span>`
+                    : '';
+
+                  wrapper.innerHTML = `
+                    <h2>${filename.replace('.txt', '')}</h2>
+                    <table class="report-table">
+                      <tr>
+                        <th>Resumo</th>
+                        <td>${badgeHTML}</td>
+                      </tr>
+                      <tr>
+                        <th>Conteúdo</th>
+                        <td>${highlights.join('')}</td>
+                      </tr>
+                    </table>
+                  `;
+
+                  document.getElementById('reportCards').appendChild(wrapper);
+                });
+            });
         });
     }
 
