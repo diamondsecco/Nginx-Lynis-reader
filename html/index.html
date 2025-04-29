@@ -71,12 +71,17 @@
       color: #fff;
     }
 
-    .low {
+    .red {
       background-color: #e74c3c;
     }
 
-    .medium {
+    .orange {
       background-color: #f39c12;
+    }
+
+    .yellow {
+      background-color: #f1c40f;
+      color: #000;
     }
 
     .high {
@@ -97,7 +102,6 @@
       background: #ffff99;
       font-weight: bold;
     }
-
   </style>
 </head>
 <body>
@@ -157,7 +161,17 @@
                     highlights.push(`<div class="highlight-line">${highlightedLine}</div>`);
                   });
 
-                  const badgeClass = hardeningIndex < 60 ? 'low' : (hardeningIndex < 80 ? 'medium' : 'high');
+                  let badgeClass = '';
+                  if (hardeningIndex >= 90 && hardeningIndex <= 100) {
+                    badgeClass = 'high';      // verde
+                  } else if (hardeningIndex >= 70 && hardeningIndex <= 89) {
+                    badgeClass = 'yellow';    // amarelo
+                  } else if (hardeningIndex >= 50 && hardeningIndex <= 69) {
+                    badgeClass = 'orange';    // laranja
+                  } else if (hardeningIndex >= 1 && hardeningIndex <= 49) {
+                    badgeClass = 'red';       // vermelho
+                  }
+
                   const badgeHTML = hardeningIndex !== null
                     ? `<span class="badge ${badgeClass}">Hardening Index: ${hardeningIndex}</span>`
                     : '';
